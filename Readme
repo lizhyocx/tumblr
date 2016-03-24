@@ -1,0 +1,6 @@
+获取指定tumblr的视频下载地址
+main方法参数：1：tumblr地址：http://xxx.tumblr.com/ 2:结果存放路径：D:\tumblr\ 3：获取几个月的数据：12
+
+可执行：out\artifacts\tumblr_jar\tumblr.jar
+
+java -jar tumblr.jar http://xxxx.tumblr.com E: 1
