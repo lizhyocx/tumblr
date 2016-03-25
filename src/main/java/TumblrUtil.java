@@ -1,8 +1,5 @@
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by Administrator on 2016/3/24.
@@ -42,12 +39,17 @@ public class TumblrUtil {
         return url;
     }
 
-    public static String getFile(String filePath, String userName, String yearMonth) {
-        yearMonth = yearMonth.replace("/", "_");
+    public static String getParentFile(String filePath, String userName) {
         if (!filePath.endsWith(File.separator)) {
             filePath += File.separator;
         }
-        String fileName = filePath+userName+File.separator+yearMonth+".txt";
+        return filePath + userName;
+    }
+
+    public static String getFile(String parentFilePath,String yearMonth) {
+        yearMonth = yearMonth.replace("/", "_");
+
+        String fileName = parentFilePath+File.separator+yearMonth+".txt";
         return fileName;
     }
 
@@ -63,5 +65,49 @@ public class TumblrUtil {
             makeDir(dir.getParentFile());
         }
         dir.mkdir();
+    }
+
+    public static void mergeFiles(String parentFilePath) {
+        Set<String> set = new HashSet<String>();
+        File parentFile = new File(parentFilePath);
+        if(!parentFile.exists()) {
+            System.out.println("parentFile ["+parentFilePath+"] not exist");
+            return;
+        }
+        File[] files = parentFile.listFiles();
+        BufferedReader br = null;
+        for(File file : files) {
+            try{
+                br = new BufferedReader(new FileReader(file));
+                String str = "";
+                while((str = br.readLine()) != null) {
+                    set.add(str);
+                }
+                br.close();
+                br = null;
+            } catch(IOException e) {
+                System.out.println("mergeFiles exception,file="+file.getName());
+            }
+
+        }
+        String fileName = parentFilePath+File.separator+parentFile.getName()+".txt";
+        BufferedWriter bw = null;
+        try{
+            bw = new BufferedWriter(new FileWriter(fileName));
+            for(String str : set) {
+                bw.write(str);
+                bw.write("\r\n");
+                bw.flush();
+            }
+        } catch(IOException e) {
+            System.out.println("merge WriteFile exception,fileName="+fileName);
+        }
+        if(bw != null) {
+            try{
+                bw.close();
+            } catch(IOException e) {
+            }
+        }
+
     }
 }

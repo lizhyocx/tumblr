@@ -37,9 +37,11 @@ public class Tumblr {
         final CountDownLatch countDownLatch = new CountDownLatch(monthNum);
         ExecutorService es = Executors.newFixedThreadPool(monthNum);
         List<String> monthList = TumblrUtil.getAllDateByMonth(monthNum);
+        String userName = TumblrUtil.getUsernameByUrl(homeUrl);
+        String parentFileName = TumblrUtil.getParentFile(filePath, userName);
         for(String month : monthList) {
             final String url = TumblrUtil.getUrl(homeUrl)+"archive/"+month;
-            final String fileName = TumblrUtil.getFile(filePath,TumblrUtil.getUsernameByUrl(homeUrl),month);
+            final String fileName = TumblrUtil.getFile(parentFileName,month);
             es.submit(new Runnable() {
                 public void run() {
                     try {
@@ -56,11 +58,13 @@ public class Tumblr {
         try {
             countDownLatch.await();
             es.shutdown();
-            System.out.print("main execute end");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+        //合并文件
+        System.out.println("main merge files begin");
+        TumblrUtil.mergeFiles(parentFileName);
+        System.out.print("main execute end");
     }
 
     /**
@@ -118,7 +122,7 @@ public class Tumblr {
 
     private static void getAllDownload(Set<String> urlVideoList, String fileName) throws IOException {
         if(urlVideoList.size() == 0) {
-            System.out.println("getLAllDownload end empty");
+            System.out.println("getAllDownload end empty");
             return;
         }
         File file = new File(fileName);
@@ -144,7 +148,7 @@ public class Tumblr {
             }
         }
         br.close();
-        System.out.println("getLAllDownload end");
+        System.out.println("getAllDownload end");
     }
 
     private static String getHtml(String strUrl) throws Exception {
