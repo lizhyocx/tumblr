@@ -89,7 +89,8 @@ public class Tumblr {
         Set<String> urlPostList = new HashSet<String>();
         String post = TumblrUtil.getUrl(homeUrl)+"post/";
         try {
-            Document doc = Jsoup.connect(url).get();
+            String html = getHtml(url);
+            Document doc = Jsoup.parse(html);
             Elements elements = doc.getElementsByTag("a");
             for(int i=0;i<elements.size();i++) {
                 Element e = elements.get(i);
@@ -98,8 +99,9 @@ public class Tumblr {
                     urlPostList.add(aHref);
                 }
             }
-        } catch (IOException e) {
-            System.out.println("getAllPostByUrl exception:" + url+",error"+e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("getAllPostByMonth exception:" + url+",error"+e.getMessage());
         }
         System.out.println("getAllPostByUrl end size=:" + urlPostList.size());
         return urlPostList;
