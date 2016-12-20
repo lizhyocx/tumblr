@@ -1,8 +1,14 @@
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,9 +19,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -27,13 +33,20 @@ public class Tumblr {
     private static String homeUrl;
     private static String filePath;
     private static int monthNum;
+    private static boolean proxy = false;
     public static void main(String[] args) throws IOException {
-        //args[0]:爬虫的网址：http://xxx.tumblr.com/
-        homeUrl = args[0];
-        //args[1]:输出结果的文件
-        filePath = args[1];
-        //args[2]:获取几个月的数据
-        monthNum = Integer.parseInt(args[2]);
+        System.out.println("请输入需要爬虫的网址地址：http://xxx.tumblr.com");
+        Scanner scanner = new Scanner(System.in);
+        homeUrl = scanner.next();
+        System.out.println("请输入结果输出文件：E:\\文件\\tumblr\\");
+        filePath = scanner.next();
+        System.out.println("请输入爬取月数:");
+        monthNum = Integer.parseInt(scanner.next());
+        System.out.println("是否使用代理(127.0.0.1:1080)?y/n");
+        String str = scanner.next();
+        if("y".equalsIgnoreCase(str)) {
+            proxy = true;
+        }
         final CountDownLatch countDownLatch = new CountDownLatch(monthNum);
         ExecutorService es = Executors.newFixedThreadPool(monthNum);
         List<String> monthList = TumblrUtil.getAllDateByMonth(monthNum);
@@ -152,10 +165,28 @@ public class Tumblr {
     }
 
     private static String getHtml(String strUrl) throws Exception {
-        CloseableHttpClient httpClient = HttpClients.custom().build();
-        HttpGet getMethod = new HttpGet(strUrl);
-        CloseableHttpResponse rsp = httpClient.execute(getMethod);
-        String str = EntityUtils.toString(rsp.getEntity());
+        String str = null;
+        if(proxy) {
+            String proxyHost = "127.0.0.1";
+            int proxyPort = 1080;
+
+            SystemDefaultCredentialsProvider credentialsProvider = new SystemDefaultCredentialsProvider();
+            credentialsProvider.setCredentials(new AuthScope(proxyHost, proxyPort), new UsernamePasswordCredentials("", ""));
+            CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credentialsProvider).build();
+
+            HttpHost proxy = new HttpHost(proxyHost, proxyPort);
+            RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
+            HttpGet getMethod = new HttpGet(strUrl);
+            getMethod.setConfig(config);
+            CloseableHttpResponse rsp = httpClient.execute(getMethod);
+            str = EntityUtils.toString(rsp.getEntity());
+        } else {
+            CloseableHttpClient httpClient = HttpClients.custom().build();
+            HttpGet getMethod = new HttpGet(strUrl);
+            CloseableHttpResponse rsp = httpClient.execute(getMethod);
+            str = EntityUtils.toString(rsp.getEntity());
+        }
+
         return str;
     }
 }
