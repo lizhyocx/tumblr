@@ -19,6 +19,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -35,10 +36,10 @@ public class Tumblr {
     private static int monthNum;
     private static boolean proxy = false;
     public static void main(String[] args) throws IOException {
-        System.out.println("请输入需要爬虫的网址地址：http://xxx.tumblr.com");
+        System.out.println("请输入需要爬虫的tumblr博客名：");
         Scanner scanner = new Scanner(System.in);
-        homeUrl = scanner.next();
-        System.out.println("请输入结果输出文件：E:\\文件\\tumblr\\");
+        homeUrl = "http://".concat(scanner.next()).concat(".tumblr.com");
+        System.out.println("请输入结果输出文件：E:\\\\文件\\\\tumblr\\\\");
         filePath = scanner.next();
         System.out.println("请输入爬取月数:");
         monthNum = Integer.parseInt(scanner.next());
@@ -178,13 +179,13 @@ public class Tumblr {
 
             HttpHost proxy = new HttpHost(proxyHost, proxyPort);
             RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
-            HttpGet getMethod = new HttpGet(strUrl);
+            HttpGet getMethod = new HttpGet(URLEncoder.encode(strUrl, "UTF-8"));
             getMethod.setConfig(config);
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         } else {
             CloseableHttpClient httpClient = HttpClients.custom().build();
-            HttpGet getMethod = new HttpGet(strUrl);
+            HttpGet getMethod = new HttpGet(URLEncoder.encode(strUrl, "UTF-8"));
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         }
