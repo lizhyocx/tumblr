@@ -19,7 +19,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -179,13 +178,13 @@ public class Tumblr {
 
             HttpHost proxy = new HttpHost(proxyHost, proxyPort);
             RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
-            HttpGet getMethod = new HttpGet(URLEncoder.encode(strUrl, "UTF-8"));
+            HttpGet getMethod = new HttpGet(strUrl);
             getMethod.setConfig(config);
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         } else {
             CloseableHttpClient httpClient = HttpClients.custom().build();
-            HttpGet getMethod = new HttpGet(URLEncoder.encode(strUrl, "UTF-8"));
+            HttpGet getMethod = new HttpGet(strUrl);
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         }
