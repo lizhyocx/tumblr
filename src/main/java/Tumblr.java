@@ -28,10 +28,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,15 +49,26 @@ public class Tumblr {
         if("0".equals(filePath)) {
             filePath = "E:\\\\文件\\\\tumblr\\\\";
         }
-        System.out.println("请输入爬取年月(yyyy/M)，多个用逗号分隔:");
-        String monthStr = scanner.next();
+        System.out.println("按年月爬取(0)?按月数爬取(1)?");
+        List<String> monthList = new ArrayList<String>();
+        Integer type = scanner.nextInt();
+        if(0 == type) {
+            System.out.println("请输入爬取年月(yyyy/M)，多个用逗号分隔:");
+            String monthStr = scanner.next();
+            monthList = TumblrUtil.getAllDateByMonthString(monthStr);
+            monthNum = monthList.size();
+        } else if(1 == type) {
+            System.out.println("请输入爬取月数:");
+            monthNum = scanner.nextInt();
+            monthList = TumblrUtil.getAllDateByMonth(monthNum);
+        }
+
         System.out.println("是否使用代理(127.0.0.1:1080)?y/n");
         String str = scanner.next();
         if("y".equalsIgnoreCase(str)) {
             proxy = true;
         }
-        List<String> monthList = TumblrUtil.getAllDateByMonthString(monthStr);
-        monthNum = monthList.size();
+
         final CountDownLatch countDownLatch = new CountDownLatch(monthNum);
         ExecutorService es = Executors.newFixedThreadPool(monthNum);
         String userName = TumblrUtil.getUsernameByUrl(homeUrl);
