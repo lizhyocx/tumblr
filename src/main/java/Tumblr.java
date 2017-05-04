@@ -47,8 +47,11 @@ public class Tumblr {
         System.out.println("请输入需要爬虫的tumblr博客名：");
         Scanner scanner = new Scanner(System.in);
         homeUrl = "https://".concat(scanner.next()).concat(".tumblr.com");
-        System.out.println("请输入结果输出文件：E:\\\\文件\\\\tumblr\\\\");
+        System.out.println("请输入结果输出文件(默认E:\\文件\\tumblr\\，输入0)：");
         filePath = scanner.next();
+        if("0".equals(filePath)) {
+            filePath = "E:\\\\文件\\\\tumblr\\\\";
+        }
         System.out.println("请输入爬取年月(yyyy/M)，多个用逗号分隔:");
         String monthStr = scanner.next();
         System.out.println("是否使用代理(127.0.0.1:1080)?y/n");
