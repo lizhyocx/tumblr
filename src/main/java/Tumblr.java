@@ -5,6 +5,9 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -15,10 +18,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.net.ssl.SSLContext;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -28,28 +37,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Tumblr {
-    private static final String video = "https://www.tumblr.com/video/";
-    private static final String download = "https://www.tumblr.com/video_file/";
+    private static final String video = "/video/";
+    private static final String download = "/video_file/";
     private static String homeUrl;
     private static String filePath;
-    private static int monthNum;
+    private static Integer monthNum;
     private static boolean proxy = false;
     public static void main(String[] args) throws IOException {
         System.out.println("请输入需要爬虫的tumblr博客名：");
         Scanner scanner = new Scanner(System.in);
-        homeUrl = "http://".concat(scanner.next()).concat(".tumblr.com");
+        homeUrl = "https://".concat(scanner.next()).concat(".tumblr.com");
         System.out.println("请输入结果输出文件：E:\\\\文件\\\\tumblr\\\\");
         filePath = scanner.next();
-        System.out.println("请输入爬取月数:");
-        monthNum = Integer.parseInt(scanner.next());
+        System.out.println("请输入爬取年月(yyyy/M)，多个用逗号分隔:");
+        String monthStr = scanner.next();
         System.out.println("是否使用代理(127.0.0.1:1080)?y/n");
         String str = scanner.next();
         if("y".equalsIgnoreCase(str)) {
             proxy = true;
         }
+        List<String> monthList = TumblrUtil.getAllDateByMonthString(monthStr);
+        monthNum = monthList.size();
         final CountDownLatch countDownLatch = new CountDownLatch(monthNum);
         ExecutorService es = Executors.newFixedThreadPool(monthNum);
-        List<String> monthList = TumblrUtil.getAllDateByMonth(monthNum);
         String userName = TumblrUtil.getUsernameByUrl(homeUrl);
         String parentFileName = TumblrUtil.getParentFile(filePath, userName);
         for(String month : monthList) {
@@ -123,7 +133,7 @@ public class Tumblr {
                 for(int i=0;i<elements.size();i++) {
                     Element e = elements.get(i);
                     String src = e.attr("src");
-                    if(StringUtils.isNotEmpty(src) && src.startsWith(video)) {
+                    if(StringUtils.isNotEmpty(src) && src.contains(video)) {
                         urlVideoList.add(src);
                     }
                 }
@@ -151,7 +161,7 @@ public class Tumblr {
                 for(int i=0;i<elements.size();i++) {
                     Element e = elements.get(i);
                     String src = e.attr("src");
-                    if(StringUtils.isNotEmpty(src) && src.startsWith(download)) {
+                    if(StringUtils.isNotEmpty(src) && src.contains(download)) {
                         System.out.println(src);
                         br.write(src);
                         br.write("\r\n");
@@ -174,7 +184,10 @@ public class Tumblr {
 
             SystemDefaultCredentialsProvider credentialsProvider = new SystemDefaultCredentialsProvider();
             credentialsProvider.setCredentials(new AuthScope(proxyHost, proxyPort), new UsernamePasswordCredentials("", ""));
-            CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credentialsProvider).build();
+            CloseableHttpClient httpClient = HttpClientBuilder.create()
+                    .setDefaultCredentialsProvider(credentialsProvider)
+                    .setSSLSocketFactory(ssl())
+                    .build();
 
             HttpHost proxy = new HttpHost(proxyHost, proxyPort);
             RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
@@ -183,12 +196,24 @@ public class Tumblr {
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         } else {
-            CloseableHttpClient httpClient = HttpClients.custom().build();
+            CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(ssl()).build();
             HttpGet getMethod = new HttpGet(strUrl);
             CloseableHttpResponse rsp = httpClient.execute(getMethod);
             str = EntityUtils.toString(rsp.getEntity());
         }
 
         return str;
+    }
+
+    private static SSLConnectionSocketFactory ssl() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+        SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+            //信任所有
+            public boolean isTrusted(X509Certificate[] chain,
+                                     String authType) throws CertificateException {
+                return true;
+            }
+        }).build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+        return sslsf;
     }
 }

@@ -21,6 +21,14 @@ public class TumblrUtil {
         return list;
     }
 
+    public static List<String> getAllDateByMonthString(String monthStr) {
+        List<String> list = new ArrayList<String>();
+        for(String m : monthStr.split(",")) {
+            list.add(m);
+        }
+        return list;
+    }
+
     public static String getUsernameByUrl(String url) {
         if(url.startsWith("http://")) {
             url = url.substring(7);
